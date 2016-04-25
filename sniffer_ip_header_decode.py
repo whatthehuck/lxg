@@ -8,6 +8,9 @@ from scapy.all import *
 
 all_package = NONE
 
+arp_package_content = NONE
+rarp_package_content = NONE
+
 #icmp varible
 icmp_raw_data = NONE
 icmp_package = NONE
@@ -486,6 +489,44 @@ def igmp():
 
     except KeyboardInterrupt:
         exit(0)
+#------------------------------END-----------------------------
+
+#----------------------------ARP-------------------------------
+def arp():
+    sniff(iface = "wlp4s0", filter = "arp", prn = arp_content)
+#-----------------------------END------------------------------
+
+#----------------------------RARP------------------------------
+def rarp():
+    sniff(iface = "wlp4s0", filter = "rarp", prn = rarp_content)
+
+#----------------------------END-----------------------------
+
+def arp_content(x):
+    global arp_package_content
+    global all_package
+    arp_package_content = x.show()
+    root.event_generate("<<COMRxRdy>>", when="tail")
+    root.update()
+
+    lock.acquire()
+    all_package = arp_package_content
+    root.event_generate("<<COMRxRdy>>", when="tail")
+    root.update()
+    lock.release()
+
+def rarp_content(x):
+    global rarp_package_content
+    global all_package
+    rarp_package_content = x.show()
+    root.event_generate("<<COMRxRdy>>", when="tail")
+    root.update()
+
+    lock.acquire()
+    all_package = rarp_package_content
+    root.event_generate("<<COMRxRdy>>", when="tail")
+    root.update()
+    lock.release()
 
 '''
 process_tcp = NONE
@@ -558,19 +599,31 @@ def printkey(event):
             tcp_package = ""
         text.delete(0.0, END)
         root.bind("<<COMRxRdy>>", lambda evt: text.insert("insert", tcp_package))
-    if event.char == "3":
+    if event.char == "3":   #udp
         global udp_package
         if udp_package == NONE:
             udp_package = ""
         text.delete(0.0, END)
         root.bind("<<COMRxRdy>>", lambda evt: text.insert("insert", udp_package))
-    if event.char == "4":
+    if event.char == "4":   #igmp
         global igmp_package
         if igmp_package == NONE:
             igmp_package = ""
         text.delete(0.0, END)
         root.bind("<<COMRxRdy>>", lambda evt: text.insert("insert", igmp_package))
-    if event.char == "a":
+    if event.char == "5":   #arp
+        global arp_package_content
+        if arp_package_content == NONE:
+            arp_package_content = ""
+        text.delete(0.0, END)
+        root.bind("<<COMRxRdy>>", lambda evt: text.insert("insert", arp_package_content))
+    if event.char == "6":   #rarp
+        global rarp_package_content
+        if rarp_package_content == NONE:
+            rarp_package_content = ""
+        text.delete(0.0, END)
+        root.bind("<<COMRxRdy>>", lambda evt: text.insert("insert", arp_package_content))
+    if event.char == "a":   #all package
         global all_package
         if all_package == NONE:
             all_package = ""
@@ -579,14 +632,18 @@ def printkey(event):
 
 lock = Lock()
 
-thread_icmp = Thread(target=icmp)
-thread_tcp = Thread(target=tcp)
-thread_udp = Thread(target=udp)
-thread_igmp = Thread(target=igmp)
+thread_icmp = Thread(target = icmp)
+thread_tcp = Thread(target = tcp)
+thread_udp = Thread(target = udp)
+thread_igmp = Thread(target = igmp)
+thread_arp = Thread(target = arp)
+thread_rarp = Thread(target = rarp)
 thread_icmp.start()
 thread_tcp.start()
 thread_udp.start()
 thread_igmp.start()
+thread_arp.start()
+thread_rarp.start()
 #root = Tk()
 text = Text(root)
 entry = Entry(root)
