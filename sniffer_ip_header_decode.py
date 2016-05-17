@@ -490,22 +490,11 @@ def igmp():
     except KeyboardInterrupt:
         exit(0)
 #------------------------------END-----------------------------
-
-#----------------------------ARP-------------------------------
-def arp():
-    sniff(iface = "wlp4s0", filter = "arp", prn = arp_content)
-#-----------------------------END------------------------------
-
-#----------------------------RARP------------------------------
-def rarp():
-    sniff(iface = "wlp4s0", filter = "rarp", prn = rarp_content)
-
-#----------------------------END-----------------------------
-
+'''
 def arp_content(x):
     global arp_package_content
     global all_package
-    arp_package_content = x.show()
+    arp_package_content = hexdump(x)
     root.event_generate("<<COMRxRdy>>", when="tail")
     root.update()
 
@@ -518,7 +507,7 @@ def arp_content(x):
 def rarp_content(x):
     global rarp_package_content
     global all_package
-    rarp_package_content = x.show()
+    rarp_package_content = hexdump(x)
     root.event_generate("<<COMRxRdy>>", when="tail")
     root.update()
 
@@ -527,6 +516,43 @@ def rarp_content(x):
     root.event_generate("<<COMRxRdy>>", when="tail")
     root.update()
     lock.release()
+'''
+#----------------------------ARP-------------------------------
+def arp():
+    global arp_package_content
+    global all_package
+    #sniff(iface = "wlp4s0", filter = "arp", prn = arp_content)
+    arp_package_content = str(sniff(iface = "wlp4s0", filter = "arp", count = 1))
+    arp_package_content += "\n"
+    root.event_generate("<<COMRxRdy>>", when="tail")
+    root.update()
+
+    lock.acquire()
+    all_package = arp_package_content
+    root.event_generate("<<COMRxRdy>>", when="tail")
+    root.update()
+    lock.release()
+
+#-----------------------------END------------------------------
+
+#----------------------------RARP------------------------------
+def rarp():
+    global arp_package_content
+    global all_package
+    #sniff(iface = "wlp4s0", filter = "arp", prn = arp_content)
+    rarp_package_content = str(sniff(iface = "wlp4s0", filter = "rarp", count = 1))
+    rarp_package_content += "\n"
+    root.event_generate("<<COMRxRdy>>", when="tail")
+    root.update()
+
+    lock.acquire()
+    all_package = rarp_package_content
+    root.event_generate("<<COMRxRdy>>", when="tail")
+    root.update()
+    lock.release()
+
+
+#----------------------------END-----------------------------
 
 '''
 process_tcp = NONE
@@ -622,7 +648,7 @@ def printkey(event):
         if rarp_package_content == NONE:
             rarp_package_content = ""
         text.delete(0.0, END)
-        root.bind("<<COMRxRdy>>", lambda evt: text.insert("insert", arp_package_content))
+        root.bind("<<COMRxRdy>>", lambda evt: text.insert("insert", rarp_package_content))
     if event.char == "a":   #all package
         global all_package
         if all_package == NONE:
