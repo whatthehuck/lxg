@@ -4,6 +4,7 @@ import socket
 import binascii
 import struct
 import threading
+from multiprocessing import Process
 
 seq = 0
 err = 0
@@ -11,7 +12,7 @@ lose = 0
 normal = 0
 
 host = "127.0.0.1"
-port = 9188
+port = 9189
 receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 receiver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -86,7 +87,14 @@ def SEND():
         receiver.close()
         exit(0)
 
-recv_thread = threading.Thread(target = RECEIVE)
-recv_thread.start()
-send_thread = threading.Thread(target = SEND)
-send_thread.start()
+def p():
+    recv_thread = threading.Thread(target = RECEIVE)
+    recv_thread.start()
+    send_thread = threading.Thread(target = SEND)
+    send_thread.start()
+    while True:
+        pass
+
+proc = Process(target = p)
+proc.start()
+

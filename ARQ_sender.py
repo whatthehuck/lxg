@@ -6,6 +6,7 @@ import struct
 import random
 import threading
 import time
+from multiprocessing import Process
 
 flag = 1
 seq = 0
@@ -14,7 +15,7 @@ time_out = 0
 err = 0
 
 host = '127.0.0.1'
-port = 9188
+port = 9189
 
 sender = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sender.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -124,8 +125,14 @@ def RECV():
 
     except KeyboardInterrupt:
         exit(0)
+def p():
+    send_thread = threading.Thread(target = SEND)
+    send_thread.start()
+    recv_thread = threading.Thread(target = RECV)
+    recv_thread.start()
+    while True:
+        pass
 
-send_thread = threading.Thread(target = SEND)
-send_thread.start()
-recv_thread = threading.Thread(target = RECV)
-recv_thread.start()
+proc = Process(target = p)
+proc.start()
+
